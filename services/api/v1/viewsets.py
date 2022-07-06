@@ -40,12 +40,22 @@ class RiderRequestView(APIView):
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         if serializer.is_valid(raise_exception=True):
-            requester = serializer.validated_data["requester"]
-            deriver = serializer.validated_data["deriver"]
+            requester = serializer.initial_data["requester"]
+            requester_obj = User.objects.get(id=requester)
+            deriver = serializer.initial_data["deriver"]
+            deriver_obj = User.objects.get(id=deriver)
+            status_ = serializer.initial_data["status"]
+            pickup_coordinates = serializer.initial_data["pickup_coordinates"]
+            destination_coordinates = serializer.initial_data["destination_coordinates"]
+            pickup_label = serializer.initial_data["pickup_label"]
+            destination_label = serializer.initial_data["destination_label"]
             obj = RiderRequest.objects.filter(requester=requester, deriver=deriver).first()
             if obj is None:
-                serializer.save()
-                return Response({"response": serializer.data}, status=status.HTTP_201_CREATED)
+                RiderRequest.objects.create(destination_label=destination_label, pickup_label=pickup_label,
+                                            destination_coordinates=destination_coordinates,
+                                            pickup_coordinates=pickup_coordinates, status=status_, deriver=deriver_obj,
+                                            requester=requester_obj)
+                return Response({"response": serializer.initial_data}, status=status.HTTP_201_CREATED)
             return Response({"response": "You have already made request to that Driver"})
         return Response({"response": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
